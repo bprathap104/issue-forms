@@ -88,7 +88,7 @@ jobs:
           region = form_data.get("region", "")
           environment = form_data.get("environment", "")
           
-          print(f"Extracted fields:")
+          print("Extracted fields:")
           print(f"App ID: {app_id}")
           print(f"App Name: {app_name}")
           print(f"Region: {region}")
@@ -104,22 +104,22 @@ jobs:
           # Validate app ID
           if not app_id or len(app_id) < 3:
               is_valid = False
-              errors.append('❌ Application ID is missing or too short (minimum 3 characters)')
+              errors.append('Application ID is missing or too short (minimum 3 characters)')
 
           # Validate app name
           if not app_name or len(app_name) < 2:
               is_valid = False
-              errors.append('❌ Application Name is missing or too short (minimum 2 characters)')
+              errors.append('Application Name is missing or too short (minimum 2 characters)')
 
           # Validate region
           if not region or region not in valid_regions:
               is_valid = False
-              errors.append(f'❌ Region is invalid. Must be one of: {", ".join(valid_regions)}')
+              errors.append(f'Region is invalid. Must be one of: {", ".join(valid_regions)}')
 
           # Validate environment
           if not environment or environment not in valid_environments:
               is_valid = False
-              errors.append(f'❌ Environment is invalid. Must be one of: {", ".join(valid_environments)}')
+              errors.append(f'Environment is invalid. Must be one of: {", ".join(valid_environments)}')
 
           # Create comment with validation results
           if is_valid:
@@ -138,10 +138,11 @@ jobs:
               
               print("Validation passed! Issue is valid.")
           else:
+              error_list = "\n".join([f"- {err}" for err in errors])
               comment_body = (
                   '## ❌ Issue Validation Failed\n\n'
                   'The following errors were found:\n\n'
-                  f'{"\n".join(errors)}\n\n'
+                  f'{error_list}\n\n'
                   'Please edit your issue to fix these problems.'
               )
               

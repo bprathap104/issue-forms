@@ -1,0 +1,162 @@
+name: Validate Issue Form
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  validate-issue:
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.title, '[BUG]')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyGithub requests
+      
+      - name: Validate issue template
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          import os
+          import json
+          import requests
+          from github import Github
+
+          # Get environment variables
+          github_token = os.environ['GITHUB_TOKEN']
+          issue_number = int(os.environ['ISSUE_NUMBER'])
+          repo_owner = os.environ['REPO_OWNER']
+          repo_name = os.environ['REPO_NAME']
+
+          # Initialize GitHub client
+          g = Github(github_token)
+          repo = g.get_repo(f"{repo_owner}/{repo_name}")
+          issue = repo.get_issue(issue_number)
+
+          # For YAML form-based issues, we need to fetch the form data
+          # This is available in the issue body as structured data
+          
+          # Get issue details
+          headers = {
+              "Authorization": f"token {github_token}",
+              "Accept": "application/vnd.github.v3+json"
+          }
+          
+          # Get issue with form data
+          url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues/{issue_number}"
+          response = requests.get(url, headers=headers)
+          issue_data = response.json()
+          
+          # Extract form data from body
+          # For form-based issues, this will be in JSON format in the body
+          form_data = {}
+          
+          # In a real situation, we would parse the issue body to extract form data
+          # For this example, we'll simulate this by extracting key information
+          
+          # This is a simplified approach - in a real world scenario, 
+          # you would need to properly parse the issue body or use GraphQL to get form data
+          body_lines = issue_data["body"].split("\n")
+          current_field = None
+          
+          for line in body_lines:
+              line = line.strip()
+              if line.startswith("### "):
+                  # This is a field header
+                  current_field = line[4:].lower().replace(" ", "_")
+              elif current_field and line and not line.startswith("#"):
+                  # This is a field value
+                  form_data[current_field] = line
+                  current_field = None
+          
+          # Extract key fields
+          app_id = form_data.get("application_id", "")
+          app_name = form_data.get("application_name", "")
+          region = form_data.get("region", "")
+          environment = form_data.get("environment", "")
+          
+          print(f"Extracted fields:")
+          print(f"App ID: {app_id}")
+          print(f"App Name: {app_name}")
+          print(f"Region: {region}")
+          print(f"Environment: {environment}")
+
+          # Validate fields
+          valid_regions = ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1', 'ap-northeast-1']
+          valid_environments = ['dev', 'staging', 'production']
+
+          is_valid = True
+          errors = []
+
+          # Validate app ID
+          if not app_id or len(app_id) < 3:
+              is_valid = False
+              errors.append('❌ Application ID is missing or too short (minimum 3 characters)')
+
+          # Validate app name
+          if not app_name or len(app_name) < 2:
+              is_valid = False
+              errors.append('❌ Application Name is missing or too short (minimum 2 characters)')
+
+          # Validate region
+          if not region or region not in valid_regions:
+              is_valid = False
+              errors.append(f'❌ Region is invalid. Must be one of: {", ".join(valid_regions)}')
+
+          # Validate environment
+          if not environment or environment not in valid_environments:
+              is_valid = False
+              errors.append(f'❌ Environment is invalid. Must be one of: {", ".join(valid_environments)}')
+
+          # Create comment with validation results
+          if is_valid:
+              comment_body = (
+                  '## ✅ Issue Validation Passed\n\n'
+                  'All required fields are properly filled out:\n\n'
+                  f'- **App ID**: {app_id}\n'
+                  f'- **App Name**: {app_name}\n'
+                  f'- **Region**: {region}\n'
+                  f'- **Environment**: {environment}\n\n'
+                  'A team member will review your issue shortly.'
+              )
+              
+              # Add appropriate labels
+              issue.add_to_labels('validated', environment, region)
+              
+              print("Validation passed! Issue is valid.")
+          else:
+              comment_body = (
+                  '## ❌ Issue Validation Failed\n\n'
+                  'The following errors were found:\n\n'
+                  f'{"\n".join(errors)}\n\n'
+                  'Please edit your issue to fix these problems.'
+              )
+              
+              # Add needs-info label
+              issue.add_to_labels('needs-info')
+              
+              print("Validation failed! See errors:")
+              for error in errors:
+                  print(f"  {error}")
+
+          # Post comment
+          issue.create_comment(comment_body)
+          
+          # Process valid issue (additional actions)
+          if is_valid:
+              print(f"Processing valid issue #{issue_number} for app {app_name} ({app_id}) in {region}/{environment}")
+              # Add additional processing here as needed
+        shell: python

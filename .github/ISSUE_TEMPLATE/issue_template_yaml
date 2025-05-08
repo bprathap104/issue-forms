@@ -1,0 +1,104 @@
+name: Bug Report
+description: Report an issue with the application
+title: "[BUG] "
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Application Details
+        Please provide the following information about the application experiencing the issue.
+
+  - type: input
+    id: app_id
+    attributes:
+      label: Application ID
+      description: The unique identifier for your application
+      placeholder: e.g., app-12345
+    validations:
+      required: true
+
+  - type: input
+    id: app_name
+    attributes:
+      label: Application Name
+      description: The name of the application experiencing the issue
+      placeholder: e.g., Customer Portal
+    validations:
+      required: true
+
+  - type: dropdown
+    id: region
+    attributes:
+      label: Region
+      description: Select the region where the application is deployed
+      options:
+        - us-east-1
+        - us-west-2
+        - eu-west-1
+        - ap-southeast-1
+        - ap-northeast-1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      description: Select the environment where the issue is occurring
+      options:
+        - dev
+        - staging
+        - production
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Provide a clear and concise description of the issue
+      placeholder: When I clicked on the Submit button, the page showed an error message...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Describe what you expected to happen
+      placeholder: I expected the form to be submitted successfully...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or logs
+      description: If applicable, add screenshots or log outputs to help explain your problem
+      placeholder: Paste any relevant screenshots or logs here...
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here
+      placeholder: Browser version, operating system, etc.
+    validations:
+      required: false
